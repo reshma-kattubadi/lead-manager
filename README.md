@@ -1,22 +1,27 @@
 # Lead Manager – Full Stack Developer Screening Assignment
 
-**Candidate Submission for Meru Technosoft Pvt. Ltd.**
+**Candidate Submission for Meru Technosoft Pvt. Ltd.**  
+**Candidate Name:** Reshma Kattubadi  
+**Repository:** [https://github.com/reshma-kattubadi/lead-manager](https://github.com/reshma-kattubadi/lead-manager)
 
 A production-ready, full-stack **Lead Manager** web application built with the **MERN** stack (MongoDB, Express.js, React.js, Node.js) and Tailwind CSS. The app enables sales teams to capture, qualify, search, filter, and manage sales leads through an intuitive, responsive CRM dashboard.
 
 ---
 
 ## 📑 Table of Contents
-1. [Assignment Requirements & Status](#assignment-requirements--status)
-2. [Tech Stack](#tech-stack)
-3. [Project Architecture & Directory Structure](#project-architecture--directory-structure)
-4. [Database Design & Schema](#database-design--schema)
-5. [REST API Documentation](#rest-api-documentation)
-6. [Getting Started (Local Installation)](#getting-started-local-installation)
-7. [MongoDB Configuration Guide](#mongodb-configuration-guide)
-8. [Automated Testing](#automated-testing)
-9. [Deployment Guide (Vercel & Render)](#deployment-guide-vercel--render)
-10. [Design Decisions & Interview Talking Points](#design-decisions--interview-talking-points)
+1. [Assignment Requirements & Status](#1-assignment-requirements--status)
+2. [Tech Stack & Why It Was Chosen](#2-tech-stack--why-it-was-chosen)
+3. [Project Architecture & Directory Structure](#3-project-architecture--directory-structure)
+4. [Database Design, Schema & Indexing](#4-database-design-schema--indexing)
+5. [REST API Documentation](#5-rest-api-documentation)
+6. [Getting Started (Local Installation & Seeding)](#6-getting-started-local-installation--seeding)
+7. [MongoDB Configuration Guide (Atlas & Embedded Fallback)](#7-mongodb-configuration-guide-atlas--embedded-fallback)
+8. [Automated Testing & Verification](#8-automated-testing--verification)
+9. [Deployment Guide (Vercel & Render)](#9-deployment-guide-vercel--render)
+10. [Key Assumptions Made](#10-key-assumptions-made)
+11. [Note on Proud Achievements & Challenges](#11-note-on-proud-achievements--challenges)
+12. [What Would Be Improved With More Time](#12-what-would-be-improved-with-more-time)
+13. [Design Decisions & Technical Interview Talking Points](#13-design-decisions--technical-interview-talking-points)
 
 ---
 
@@ -24,31 +29,31 @@ A production-ready, full-stack **Lead Manager** web application built with the *
 
 ### Compulsory Requirements (100% Complete)
 - [x] **1. Add Lead**: Capture `name`, `email`, `phone`, `company`, `source` (dropdown), and `status` (`New` / `Contacted` / `Qualified` / `Lost`).
-- [x] **2. Display Leads**: Clean responsive table clearly displaying all contact information and color-coded status badges.
-- [x] **3. Edit Lead**: Update lead details and stage status with real-time feedback.
-- [x] **4. Delete Lead**: Permanent deletion with a safe two-step confirmation modal.
-- [x] **5. Search & Filter**: Real-time search by name, company, or email with debouncing, plus instant status filtering dropdown.
+- [x] **2. Display Leads Table**: Clean responsive table clearly displaying all contact information and color-coded status badges.
+- [x] **3. Edit Lead Details**: Update lead details and stage status with real-time feedback and optimistic updates.
+- [x] **4. Delete Lead (with Confirmation)**: Permanent deletion with a safe two-step confirmation modal (`DeleteModal.jsx`).
+- [x] **5. Search & Filter**: Real-time search by name, company, or email with debouncing (300ms), plus instant status filtering dropdown.
 - [x] **6. Two-Way Validation**: Comprehensive frontend validation (real-time feedback) and backend Mongoose/middleware validation (format checks, regex, enums).
 
-### Bonus Features Included
+### Bonus Features Included (From Assignment Section 2)
 - [x] **Pagination & Interactive Sorting**: Server-side pagination with configurable page size (5, 10, 25, 50) and multi-column sorting (Name, Company, Status, Created Date).
 - [x] **CSV Data Export**: One-click export of current filtered pipeline leads directly into `.csv`.
 - [x] **Database Seeder Script**: Automated command (`npm run seed`) to quickly populate realistic sample pipeline records for demonstration.
 - [x] **Dashboard Metric Cards**: Live lead counter and distribution breakdown (`Total`, `New`, `Contacted`, `Qualified`, `Lost`) that update automatically.
-- [x] **Automated Test Suite**: 49 unit & integration tests covering schema validation, middleware, error handlers, pagination, and controller methods (`npm test`).
+- [x] **Automated Test Suite**: 56 unit, integration, and live end-to-end test steps covering schema validation, middleware, error handlers, pagination, and controller methods (`npm test`).
 - [x] **Optimistic UI Updates**: Instant table status updates with rollback protection upon API error.
 - [x] **Deployment Ready**: Production configs for Vercel (`vercel.json`) and Render (`render.yaml`).
 
 ---
 
-## 2. Tech Stack
+## 2. Tech Stack & Why It Was Chosen
 
-| Layer | Technology | Key Libraries / Frameworks |
-| :--- | :--- | :--- |
-| **Frontend** | React.js (v18) + Vite | Tailwind CSS, Lucide React (icons), Axios |
-| **Backend** | Node.js (v24) + Express.js | Mongoose (v8), CORS, Dotenv, Nodemon |
-| **Database** | MongoDB | MongoDB Atlas (Cloud) / Local MongoDB |
-| **Testing** | Node Test Harness | Supertest, Assert, Custom Mock Runner |
+| Layer | Technology | Key Libraries / Frameworks | Why This Stack Was Chosen |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | React.js (v18) + Vite | Tailwind CSS, Lucide React (icons), Axios | **Vite + React** delivers fast hot-module replacement and clean component modularity. **Tailwind CSS** enables a modern, accessible CRM interface with zero runtime CSS bloat. |
+| **Backend** | Node.js (v24) + Express.js | Mongoose (v8), CORS, Dotenv, Nodemon | **Node + Express** provides a lightweight, non-blocking asynchronous event loop ideal for REST microservices and predictable middleware chaining. |
+| **Database** | MongoDB | MongoDB Atlas (Cloud) / Local / Embedded | **MongoDB + Mongoose** pairs flexible BSON documents with strict schema-level validation, compound indexing for queries, and native aggregation pipelines for live metric counters. |
+| **Testing** | Node Test Harness | Supertest, Assert, Embedded Test Server | **Supertest + Node Assert** enables fast, zero-dependency unit and integration testing without requiring external test runners. |
 
 ---
 
@@ -59,21 +64,24 @@ lead-manager/
 ├── backend/
 │   ├── src/
 │   │   ├── config/
-│   │   │   └── db.js                 # MongoDB Mongoose connection with timeout & retry
+│   │   │   └── db.js                 # Mongoose connection with embedded fallback & auto-seeder
 │   │   ├── controllers/
-│   │   │   └── leadController.js     # REST business logic (CRUD, Search, Filter, Stats)
+│   │   │   └── leadController.js     # REST business logic (CRUD, Search, Filter, Stats, Pagination)
 │   │   ├── middleware/
-│   │   │   ├── errorHandler.js       # Centralized 404 & error handlers
+│   │   │   ├── errorHandler.js       # Centralized 404, CastError, and ValidationError handlers
 │   │   │   └── validateLead.js       # Request body validation middleware
 │   │   ├── models/
 │   │   │   └── Lead.js               # Mongoose schema, validation rules & compound indexes
 │   │   ├── routes/
 │   │   │   └── leadRoutes.js         # REST route definitions
+│   │   ├── seeder.js                 # CLI seeder script (npm run seed / seed:destroy)
 │   │   ├── app.js                    # Express app configuration & middleware pipeline
 │   │   └── server.js                 # HTTP listener & process shutdown handler
-│   ├── testLeadValidation.js         # Automated tests for schemas & middleware
-│   ├── testControllers.js            # Automated tests for controllers & query builder
+│   ├── testLeadValidation.js         # Automated tests for schemas & middleware (22 tests)
+│   ├── testControllers.js            # Automated tests for controllers & query builder (27 tests)
+│   ├── testLiveServer.js             # Live end-to-end integration test against real MongoDB (7 steps)
 │   ├── .env.example
+│   ├── .env
 │   ├── .gitignore
 │   └── package.json
 │
@@ -82,20 +90,21 @@ lead-manager/
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx            # Top bar with live MongoDB record badge
 │   │   │   ├── Sidebar.jsx           # Collapsible CRM navigation sidebar
-│   │   │   ├── DashboardHeader.jsx   # Page title, refresh trigger & "+ Add Lead" CTA
+│   │   │   ├── DashboardHeader.jsx   # Page title, refresh trigger, CSV export & "+ Add Lead" CTA
 │   │   │   ├── StatCards.jsx         # Pipeline counters with click-to-filter
 │   │   │   ├── SearchFilterBar.jsx   # Live search input, status/source filters & reset
-│   │   │   ├── LeadTable.jsx         # Leads table with badges, edit/delete actions
+│   │   │   ├── LeadTable.jsx         # Leads table with badges, sorting, pagination, edit/delete actions
 │   │   │   ├── LeadModal.jsx         # Add / Edit modal form with field-level validation
 │   │   │   ├── DeleteModal.jsx       # Compulsory delete confirmation modal
 │   │   │   ├── Toast.jsx             # Auto-dismissing success/error toast alerts
 │   │   │   └── EmptyState.jsx        # Context-aware empty state
 │   │   ├── services/
-│   │   │   └── api.js                # Axios client with error formatters
+│   │   │   └── api.js                # Axios client with base URL & error formatters
 │   │   ├── App.jsx                   # Central state orchestration
 │   │   ├── main.jsx                  # React DOM mount point
 │   │   └── index.css                 # Tailwind CSS styles & animations
 │   ├── .env.example
+│   ├── .env
 │   ├── .gitignore
 │   ├── index.html
 │   ├── package.json
@@ -111,7 +120,7 @@ lead-manager/
 
 ---
 
-## 4. Database Design & Schema
+## 4. Database Design, Schema & Indexing
 
 ### Lead Schema (`backend/src/models/Lead.js`)
 
@@ -136,9 +145,9 @@ lead-manager/
 }
 ```
 
-### Database Indexing:
-- **Text Index**: `{ name: 'text', company: 'text' }` for scalable regex/text search.
-- **Compound Index**: `{ status: 1, createdAt: -1 }` for filtering by status sorted by newest first.
+### Database Indexing Strategy:
+- **Text Index**: `{ name: 'text', company: 'text' }` for scalable regex/text search across contact and company names.
+- **Compound Index**: `{ status: 1, createdAt: -1 }` for instant retrieval when filtering by lead status sorted by newest first.
 
 ---
 
@@ -148,8 +157,8 @@ Base URL: `http://localhost:5000/api`
 
 | Method | Endpoint | Description | Query Parameters / Request Body | Status Codes |
 | :--- | :--- | :--- | :--- | :--- |
-| `GET` | `/leads` | List all leads | `?search=john&status=New&source=LinkedIn` | `200` |
-| `GET` | `/leads/stats` | Pipeline stats | None | `200` |
+| `GET` | `/leads` | List leads (with search, filter, sort & pagination) | `?search=john&status=New&sort=-createdAt&page=1&limit=10` | `200` |
+| `GET` | `/leads/stats` | Pipeline stats breakdown | None | `200` |
 | `GET` | `/leads/:id` | Fetch single lead | URL parameter `:id` | `200`, `400`, `404` |
 | `POST` | `/leads` | Create new lead | JSON body: `{ name, email, phone, company, source, status }` | `201`, `400` |
 | `PUT` | `/leads/:id` | Update lead | URL parameter `:id` + JSON update fields | `200`, `400`, `404` |
@@ -162,7 +171,7 @@ Base URL: `http://localhost:5000/api`
   "success": false,
   "message": "Validation failed",
   "errors": [
-    { "field": "email", "message": "Please provide a valid email address" },
+    { "field": "email", "message": "Please provide a valid email address (e.g. name@domain.com)" },
     { "field": "phone", "message": "Please provide a valid phone number (7-20 digits)" }
   ]
 }
@@ -170,16 +179,16 @@ Base URL: `http://localhost:5000/api`
 
 ---
 
-## 6. Getting Started (Local Installation)
+## 6. Getting Started (Local Installation & Seeding)
 
 ### Prerequisites:
 - **Node.js**: v18 or v24+
 - **npm**: v9+
-- **MongoDB**: Either a local MongoDB instance running on port 27017 or a free MongoDB Atlas cloud cluster.
+- **MongoDB**: Either MongoDB Atlas (Cloud), a local MongoDB service, or zero-config mode (auto-embedded).
 
 ### Step 1: Clone the Repository
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/reshma-kattubadi/lead-manager.git
 cd lead-manager
 ```
 
@@ -195,18 +204,28 @@ npm install
 copy .env.example .env
 ```
 
-Open `backend/.env` and ensure `MONGODB_URI` points to your database:
+Open `backend/.env` to configure your connection:
 ```env
 PORT=5000
 NODE_ENV=development
 MONGODB_URI=mongodb://127.0.0.1:27017/lead_manager
 CLIENT_URL=http://localhost:5173
 ```
+*(Note: If local MongoDB is not running, the application will automatically spin up an embedded MongoDB server in development mode so you can evaluate the app immediately without extra setup!)*
 
 Start the backend development server:
 ```bash
 npm run dev
 # Server will start on http://localhost:5000
+```
+
+*(Optional) Seed sample leads:*
+```bash
+# To populate 12 realistic sample leads across all statuses:
+npm run seed
+
+# To wipe seeded leads:
+npm run seed:destroy
 ```
 
 ### Step 3: Frontend Setup
@@ -228,9 +247,12 @@ npm run dev
 
 ---
 
-## 7. MongoDB Configuration Guide
+## 7. MongoDB Configuration Guide (Atlas & Embedded Fallback)
 
-### Option A: MongoDB Atlas (Recommended Free Cloud Setup)
+### Option A: Embedded MongoDB (Zero Configuration)
+If you do not have MongoDB installed locally, you don't need to install anything! In development mode, `backend/src/config/db.js` automatically starts a local embedded MongoDB instance and auto-seeds initial records.
+
+### Option B: MongoDB Atlas (Cloud Production Setup)
 1. Sign in to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
 2. Create a free **M0 Sandbox** cluster.
 3. Under **Database Access**, create a user with read/write permissions.
@@ -241,19 +263,15 @@ npm run dev
    MONGODB_URI=mongodb+srv://admin:YourPassword123@cluster0.mongodb.net/lead_manager?retryWrites=true&w=majority
    ```
 
-### Option B: Local MongoDB
-1. Ensure the MongoDB service is running:
-   ```bash
-   mongod --dbpath <path-to-data-dir>
-   ```
-2. Set in `backend/.env`:
-   ```env
-   MONGODB_URI=mongodb://127.0.0.1:27017/lead_manager
-   ```
+### Option C: Local MongoDB Daemon
+Ensure the local service is running on default port `27017`:
+```bash
+mongod --dbpath <path-to-data-dir>
+```
 
 ---
 
-## 8. Automated Testing
+## 8. Automated Testing & Verification
 
 The project includes an automated test suite verifying all 6 compulsory assignment requirements:
 
@@ -262,11 +280,11 @@ cd backend
 npm test
 ```
 
-### Test Coverage Highlights:
-- **Schema Validation**: Tests required constraints, minimum name length, email format validation regex, phone format regex, and enum validation.
-- **Middleware Error Handling**: Tests rejection of empty payloads, duplicate keys, malformed JSON, and structured field error formatting.
-- **Controller & Query Logic**: Tests search regex query construction, status filtering, stats aggregation counters, and handling of invalid MongoDB ObjectIds.
-- **Result**: `56 / 56 test steps passing (Unit, Controller, and Live End-to-End Server Verification)`.
+### Test Coverage Breakdown:
+1. **Validation Test Suite (`testLeadValidation.js`)**: 22 tests verifying Mongoose schema constraints, email regex, phone formatting, enum restrictions, and middleware 400 responses.
+2. **Controller Test Suite (`testControllers.js`)**: 27 tests verifying query construction, regex search, status filter, countDocuments pagination, and statistics aggregation.
+3. **Live Server E2E Suite (`testLiveServer.js`)**: 7 live verification steps against real MongoDB verifying end-to-end CRUD, health check, and 404 handling.
+- **Total Passing Tests**: `56 / 56 test steps passing`.
 
 ---
 
@@ -297,29 +315,42 @@ npm test
 
 ---
 
-## 10. Design Decisions & Interview Talking Points
+## 10. Key Assumptions Made
 
-During your technical interview at **Meru Technosoft**, here are the key design choices and trade-offs to discuss:
+1. **Lead Stage Lifecycle**: Assumed a modern, agile sales workflow where leads can freely transition between `New`, `Contacted`, `Qualified`, and `Lost` based on sales rep interaction, without rigid one-way transition locks.
+2. **Contact Email & Phone Uniqueness**: Did not enforce a unique index constraint on email or phone, allowing scenarios where multiple distinct stakeholders work at the same organization or share a centralized front-desk phone number, while enforcing strict regex format validation.
+3. **Tenancy & Auth Scope**: In alignment with the assignment philosophy (*"keep it simple and done rather than large and half-finished"*), core pipeline functionality, resilient error handling, and responsive UX were prioritized over multi-tenant authentication.
+
+---
+
+## 11. Note on Proud Achievements & Challenges
+
+> **Particularly Proud of:**  
+> Architecting a resilient, zero-configuration embedded database fallback alongside live Mongoose aggregation stats and debounced search, which ensures the application works out of the box for any evaluator without requiring manual external database configuration.
+>
+> **Found Tricky:**  
+> Balancing optimistic UI updates with error rollback handling across rapid status changes, while ensuring that backend schema regex validators and frontend real-time touch events remain in sync.
+
+---
+
+## 12. What Would Be Improved With More Time
+
+1. **User Authentication & RBAC**: Add JWT authentication with role-based access control so individual sales reps view only their assigned leads, while managers view team-wide metrics.
+2. **Activity Timeline & Notes**: Add an activity audit log to each lead (e.g. call logs, meeting notes, follow-up reminders).
+3. **Bulk CSV Import**: Complement the existing CSV export feature with a drag-and-drop CSV parser with column mapping and duplicate detection.
+4. **Automated Visual E2E Tests**: Integrate Cypress or Playwright to run automated cross-browser regressions on mobile, tablet, and desktop viewports.
+
+---
+
+## 13. Design Decisions & Technical Interview Talking Points
 
 1. **Separation of Concerns (`app.js` vs `server.js`)**:
-   - `app.js` configures the Express middleware, routes, and error handling pipeline.
-   - `server.js` starts the network listener and connects to MongoDB.
-   - *Why?* This allows testing the application with Supertest without having to spin up active network ports or risk port collisions.
-
-2. **Debounced Search**:
-   - Searching triggers a 300ms debounce on the frontend.
-   - *Why?* Prevents making an API call on every single keystroke, significantly reducing database load while maintaining a fast, responsive user experience.
-
-3. **Two-Way Validation Strategy**:
-   - *Frontend*: Validates inputs immediately as the user types and on form blur to provide immediate, friendly guidance.
-   - *Backend*: Re-validates every field using dedicated middleware and Mongoose schema definitions.
-   - *Why?* Frontend validation improves UX; backend validation ensures data integrity even if API requests are made via Postman, curl, or automated scripts.
-
-4. **Optimistic Status Updates with Rollback**:
-   - When a user changes a lead's status in the table dropdown, the UI updates instantly. If the backend update fails, the table automatically rolls back to the previous state and displays a clear error toast.
-
-5. **What would you improve with more time?** (Explicitly requested by the assignment PDF):
-   - Add user authentication (JWT + bcrypt) with multi-tenancy so users only access their assigned leads.
-   - Add CSV export/import for bulk lead migration.
-   - Add column sorting (by name, company, or date) and server-side pagination for large enterprise databases.
-   - Add automated end-to-end Cypress or Playwright tests for browser interaction.
+   - `app.js` encapsulates the Express instance, CORS, middleware, and route mounting.
+   - `server.js` manages port binding, graceful process shutdowns (`SIGTERM`/`SIGINT`), and the database connection.
+   - *Advantage*: Enables automated testing with tools like Supertest without binding physical network sockets or risking port collision.
+2. **Compound Indexing & Search**:
+   - Implemented `{ name: 'text', company: 'text' }` and `{ status: 1, createdAt: -1 }` indexes in Mongoose to support scalable searches and sorted status filters as the database grows.
+3. **Debounced Search Query**:
+   - Implemented a 300ms debounce on the search input to prevent unnecessary API hammering on each keystroke while maintaining a fluid user experience.
+4. **Optimistic UI Updates with Rollback**:
+   - Quick status dropdown changes reflect immediately in the table UI. If an API failure occurs, the table automatically rolls back to the previous state and displays a clear error toast.
