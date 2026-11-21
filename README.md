@@ -266,7 +266,7 @@ npm test
 - **Schema Validation**: Tests required constraints, minimum name length, email format validation regex, phone format regex, and enum validation.
 - **Middleware Error Handling**: Tests rejection of empty payloads, duplicate keys, malformed JSON, and structured field error formatting.
 - **Controller & Query Logic**: Tests search regex query construction, status filtering, stats aggregation counters, and handling of invalid MongoDB ObjectIds.
-- **Result**: `45 / 45 tests passing`.
+- **Result**: `56 / 56 test steps passing (Unit, Controller, and Live End-to-End Server Verification)`.
 
 ---
 
