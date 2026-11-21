@@ -27,12 +27,22 @@ export const formatErrorMessage = (error) => {
 
 // API Methods
 export const leadApi = {
-  // Fetch all leads with optional search & filter query params
-  getLeads: async ({ search = '', status = 'All', source = 'All' } = {}) => {
+  // Fetch leads with optional search, filter, sorting, and pagination
+  getLeads: async ({
+    search = '',
+    status = 'All',
+    source = 'All',
+    sort = '-createdAt',
+    page = 1,
+    limit = 10,
+  } = {}) => {
     const params = {};
     if (search && search.trim()) params.search = search.trim();
     if (status && status !== 'All') params.status = status;
     if (source && source !== 'All') params.source = source;
+    if (sort) params.sort = sort;
+    if (page) params.page = page;
+    if (limit) params.limit = limit;
 
     const response = await apiClient.get('/leads', { params });
     return response.data;

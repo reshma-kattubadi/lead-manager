@@ -22,11 +22,16 @@ function App() {
     lost: 0,
   });
 
-  // Filter & Search State
+  // Filter, Search, Sort & Pagination State
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
+  const [sortBy, setSortBy] = useState('-createdAt');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   // UI & Loading States
   const [isLoading, setIsLoading] = useState(true);
@@ -52,9 +57,15 @@ function App() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setPage(1); // Reset to page 1 on new search
     }, 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, sourceFilter]);
 
   // Fetch Dashboard Statistics from API
   const loadStats = useCallback(async () => {
@@ -68,7 +79,7 @@ function App() {
     }
   }, []);
 
-  // Fetch Leads with Current Filters from API
+  // Fetch Leads with Current Filters & Pagination from API
   const loadLeads = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -76,10 +87,15 @@ function App() {
         search: debouncedSearch,
         status: statusFilter,
         source: sourceFilter,
+        sort: sortBy,
+        page,
+        limit,
       });
 
       if (response.success) {
         setLeads(response.data || []);
+        setTotalPages(response.totalPages || 1);
+        setTotalRecords(response.total !== undefined ? response.total : (response.data || []).length);
       }
     } catch (error) {
       const msg = formatErrorMessage(error);
@@ -87,9 +103,9 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch, statusFilter, sourceFilter]);
+  }, [debouncedSearch, statusFilter, sourceFilter, sortBy, page, limit]);
 
-  // Load leads whenever debounced search or filters change
+  // Load leads whenever query, filters, sort or page changes
   useEffect(() => {
     loadLeads();
     loadStats();
@@ -126,12 +142,10 @@ function App() {
     setIsSubmitting(true);
     try {
       if (editingLead) {
-        // Update existing lead
         const leadId = editingLead._id || editingLead.id;
         await leadApi.updateLead(leadId, formData);
         showToast('Lead details updated successfully!', 'success');
       } else {
-        // Create new lead
         await leadApi.createLead(formData);
         showToast('New lead created successfully!', 'success');
       }
@@ -165,7 +179,6 @@ function App() {
     } catch (error) {
       const msg = formatErrorMessage(error);
       showToast(`Failed to update status: ${msg}`, 'error');
-      // Rollback on failure
       loadLeads();
     }
   };
@@ -193,6 +206,35 @@ function App() {
     setDebouncedSearch('');
     setStatusFilter('All');
     setSourceFilter('All');
+    setSortBy('-createdAt');
+    setPage(1);
+  };
+
+  // Export current leads as CSV
+  const handleExportCSV = () => {
+    if (leads.length === 0) return;
+
+    const headers = ['Name', 'Email', 'Phone', 'Company', 'Source', 'Status', 'Created At'];
+    const rows = leads.map((lead) => [
+      `"${(lead.name || '').replace(/"/g, '""')}"`,
+      `"${(lead.email || '').replace(/"/g, '""')}"`,
+      `"${(lead.phone || '').replace(/"/g, '""')}"`,
+      `"${(lead.company || '').replace(/"/g, '""')}"`,
+      `"${(lead.source || '').replace(/"/g, '""')}"`,
+      `"${(lead.status || '').replace(/"/g, '""')}"`,
+      `"${lead.createdAt ? new Date(lead.createdAt).toISOString() : ''}"`,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `leads_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showToast(`Exported ${leads.length} leads to CSV`, 'info');
   };
 
   const hasFilterActive =
@@ -221,6 +263,8 @@ function App() {
               loadStats();
               showToast('Refreshed pipeline data from MongoDB', 'info');
             }}
+            onExportCSV={handleExportCSV}
+            totalLeads={totalRecords}
             isLoading={isLoading}
             openMobileSidebar={() => setIsMobileSidebarOpen(true)}
           />
@@ -241,7 +285,7 @@ function App() {
             sourceFilter={sourceFilter}
             onSourceChange={setSourceFilter}
             onResetFilters={handleResetFilters}
-            totalResults={leads.length}
+            totalResults={totalRecords}
           />
 
           {/* Leads Table or Empty State */}
@@ -252,6 +296,17 @@ function App() {
               onDelete={handleOpenDeleteModal}
               onStatusUpdate={handleQuickStatusUpdate}
               isLoading={isLoading}
+              sortBy={sortBy}
+              onSortChange={(newSort) => setSortBy(newSort)}
+              page={page}
+              totalPages={totalPages}
+              totalRecords={totalRecords}
+              limit={limit}
+              onPageChange={(newPage) => setPage(newPage)}
+              onLimitChange={(newLimit) => {
+                setLimit(newLimit);
+                setPage(1);
+              }}
             />
           ) : (
             <EmptyState

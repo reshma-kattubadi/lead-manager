@@ -76,24 +76,35 @@ async function runControllerTests() {
     assert(res.body.success === false, 'deleteLead returns success: false for invalid ID');
   }
 
-  // 4. Test Query Building in getLeads (Search & Filter Logic)
+  // 4. Test Query Building in getLeads (Search & Filter Logic with Pagination)
   {
-    // Test Search by Name query construction
     let capturedQuery = null;
+    let capturedLimit = null;
     const originalFind = Lead.find;
+    const originalCount = Lead.countDocuments;
+
+    Lead.countDocuments = async function (q) {
+      return 25;
+    };
+
     Lead.find = function (query) {
       capturedQuery = query;
-      return {
-        sort: () => ({
-          lean: async () => [
-            { _id: '1', name: 'John Doe', status: 'New', company: 'Acme Corp' },
-          ],
-        }),
+      const chain = {
+        sort: () => chain,
+        skip: () => chain,
+        limit: (l) => {
+          capturedLimit = l;
+          return chain;
+        },
+        lean: async () => [
+          { _id: '1', name: 'John Doe', status: 'New', company: 'Acme Corp' },
+        ],
       };
+      return chain;
     };
 
     const { req, res } = createMockReqRes({
-      query: { search: 'John', status: 'New' },
+      query: { search: 'John', status: 'New', page: '2', limit: '10' },
     });
     await getLeads(req, res, (err) => {});
 
@@ -102,9 +113,14 @@ async function runControllerTests() {
     assert(capturedQuery.status === 'New', 'Query builder filters by status="New"');
     assert(capturedQuery.$or !== undefined, 'Query builder creates $or regex search for name/company/email');
     assert(capturedQuery.$or[0].name.test('John Doe'), 'Regex matches "John Doe"');
+    assert(res.body.total === 25, 'getLeads returns total count from countDocuments');
+    assert(res.body.page === 2, 'getLeads returns current page number (2)');
+    assert(res.body.totalPages === 3, 'getLeads calculates total pages correctly (ceil(25/10)=3)');
+    assert(capturedLimit === 10, 'Query builder applies limit of 10');
 
-    // Restore original find
+    // Restore original functions
     Lead.find = originalFind;
+    Lead.countDocuments = originalCount;
   }
 
   // 5. Test getLeadStats aggregation calculation

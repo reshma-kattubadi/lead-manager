@@ -2,13 +2,13 @@ const mongoose = require('mongoose');
 const { Lead, LEAD_STATUSES } = require('../models/Lead');
 
 /**
- * @desc    Get all leads with optional search and filter
+ * @desc    Get all leads with search, filter, sorting, and optional pagination
  * @route   GET /api/leads
  * @access  Public
  */
 const getLeads = async (req, res, next) => {
   try {
-    const { search, status, source, sort } = req.query;
+    const { search, status, source, sort, page, limit } = req.query;
 
     const query = {};
 
@@ -24,7 +24,7 @@ const getLeads = async (req, res, next) => {
       query.source = source;
     }
 
-    // Search by Name or Company (case-insensitive)
+    // Search by Name, Company, or Email (case-insensitive)
     if (search && search.trim() !== '') {
       const searchRegex = new RegExp(search.trim(), 'i');
       query.$or = [
@@ -37,11 +37,28 @@ const getLeads = async (req, res, next) => {
     // Sorting: default to newest first (-createdAt)
     const sortBy = sort || '-createdAt';
 
-    const leads = await Lead.find(query).sort(sortBy).lean();
+    // Count total matching records before pagination
+    const total = await Lead.countDocuments(query);
+
+    let leadsQuery = Lead.find(query).sort(sortBy);
+
+    // Apply pagination if limit is specified
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10);
+
+    if (limitNum && limitNum > 0) {
+      const skip = (pageNum - 1) * limitNum;
+      leadsQuery = leadsQuery.skip(skip).limit(limitNum);
+    }
+
+    const leads = await leadsQuery.lean();
 
     res.status(200).json({
       success: true,
       count: leads.length,
+      total,
+      page: pageNum,
+      totalPages: limitNum && limitNum > 0 ? Math.ceil(total / limitNum) : 1,
       data: leads,
     });
   } catch (error) {

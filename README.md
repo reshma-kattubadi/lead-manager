@@ -31,8 +31,11 @@ A production-ready, full-stack **Lead Manager** web application built with the *
 - [x] **6. Two-Way Validation**: Comprehensive frontend validation (real-time feedback) and backend Mongoose/middleware validation (format checks, regex, enums).
 
 ### Bonus Features Included
+- [x] **Pagination & Interactive Sorting**: Server-side pagination with configurable page size (5, 10, 25, 50) and multi-column sorting (Name, Company, Status, Created Date).
+- [x] **CSV Data Export**: One-click export of current filtered pipeline leads directly into `.csv`.
+- [x] **Database Seeder Script**: Automated command (`npm run seed`) to quickly populate realistic sample pipeline records for demonstration.
 - [x] **Dashboard Metric Cards**: Live lead counter and distribution breakdown (`Total`, `New`, `Contacted`, `Qualified`, `Lost`) that update automatically.
-- [x] **Automated Test Suite**: 45 unit & integration tests covering schema validation, middleware, error handlers, and controller methods (`npm test`).
+- [x] **Automated Test Suite**: 49 unit & integration tests covering schema validation, middleware, error handlers, pagination, and controller methods (`npm test`).
 - [x] **Optimistic UI Updates**: Instant table status updates with rollback protection upon API error.
 - [x] **Deployment Ready**: Production configs for Vercel (`vercel.json`) and Render (`render.yaml`).
 

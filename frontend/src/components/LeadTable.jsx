@@ -10,6 +10,11 @@ import {
   PhoneCall,
   CheckCircle2,
   XCircle,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 const statusConfig = {
@@ -35,7 +40,21 @@ const statusConfig = {
   },
 };
 
-const LeadTable = ({ leads, onEdit, onDelete, onStatusUpdate, isLoading }) => {
+const LeadTable = ({
+  leads,
+  onEdit,
+  onDelete,
+  onStatusUpdate,
+  isLoading,
+  sortBy = '-createdAt',
+  onSortChange,
+  page = 1,
+  totalPages = 1,
+  totalRecords = 0,
+  limit = 10,
+  onPageChange,
+  onLimitChange,
+}) => {
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-xs">
@@ -67,24 +86,89 @@ const LeadTable = ({ leads, onEdit, onDelete, onStatusUpdate, isLoading }) => {
     });
   };
 
+  const renderSortIcon = (field) => {
+    if (!onSortChange) return null;
+    const isCurrentField = sortBy === field || sortBy === `-${field}`;
+    if (!isCurrentField) {
+      return <ArrowUpDown className="w-3.5 h-3.5 text-slate-300 ml-1 inline-block" />;
+    }
+    return sortBy.startsWith('-') ? (
+      <ArrowDown className="w-3.5 h-3.5 text-indigo-600 ml-1 inline-block" />
+    ) : (
+      <ArrowUp className="w-3.5 h-3.5 text-indigo-600 ml-1 inline-block" />
+    );
+  };
+
+  const handleHeaderClick = (field) => {
+    if (!onSortChange) return;
+    if (sortBy === field) {
+      onSortChange(`-${field}`);
+    } else {
+      onSortChange(field);
+    }
+  };
+
+  const startRecord = (page - 1) * limit + 1;
+  const endRecord = Math.min(page * limit, totalRecords);
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              <th scope="col" className="py-3.5 px-4 sm:px-6">Lead / Contact</th>
-              <th scope="col" className="py-3.5 px-4 sm:px-6">Company</th>
+            <tr className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
+              <th
+                scope="col"
+                className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 transition-colors"
+                onClick={() => handleHeaderClick('name')}
+              >
+                <div className="inline-flex items-center">
+                  <span>Lead / Contact</span>
+                  {renderSortIcon('name')}
+                </div>
+              </th>
+
+              <th
+                scope="col"
+                className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 transition-colors"
+                onClick={() => handleHeaderClick('company')}
+              >
+                <div className="inline-flex items-center">
+                  <span>Company</span>
+                  {renderSortIcon('company')}
+                </div>
+              </th>
+
               <th scope="col" className="py-3.5 px-4">Source</th>
-              <th scope="col" className="py-3.5 px-4">Status</th>
-              <th scope="col" className="py-3.5 px-4 hidden md:table-cell">Added On</th>
+
+              <th
+                scope="col"
+                className="py-3.5 px-4 cursor-pointer hover:text-slate-900 transition-colors"
+                onClick={() => handleHeaderClick('status')}
+              >
+                <div className="inline-flex items-center">
+                  <span>Status</span>
+                  {renderSortIcon('status')}
+                </div>
+              </th>
+
+              <th
+                scope="col"
+                className="py-3.5 px-4 hidden md:table-cell cursor-pointer hover:text-slate-900 transition-colors"
+                onClick={() => handleHeaderClick('createdAt')}
+              >
+                <div className="inline-flex items-center">
+                  <span>Added On</span>
+                  {renderSortIcon('createdAt')}
+                </div>
+              </th>
+
               <th scope="col" className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
             {leads.map((lead) => {
               const statusInfo = statusConfig[lead.status] || statusConfig.New;
-              const StatusIcon = statusInfo.icon;
 
               return (
                 <tr
@@ -191,6 +275,69 @@ const LeadTable = ({ leads, onEdit, onDelete, onStatusUpdate, isLoading }) => {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination Controls */}
+      <div className="px-4 sm:px-6 py-3.5 bg-slate-50/70 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-600">
+        <div className="flex items-center space-x-3">
+          <span>
+            Showing <span className="font-semibold text-slate-800">{totalRecords > 0 ? startRecord : 0}</span> to{' '}
+            <span className="font-semibold text-slate-800">{endRecord}</span> of{' '}
+            <span className="font-semibold text-slate-800">{totalRecords}</span> leads
+          </span>
+
+          {/* Page Limit Selector */}
+          <div className="flex items-center space-x-1 pl-3 border-l border-slate-200">
+            <span>Per page:</span>
+            <select
+              value={limit}
+              onChange={(e) => onLimitChange && onLimitChange(Number(e.target.value))}
+              className="py-1 px-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Page Nav Buttons */}
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => onPageChange && onPageChange(page - 1)}
+              disabled={page <= 1}
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
+              title="Previous Page"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange && onPageChange(pageNum)}
+                className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                  page === pageNum
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+
+            <button
+              onClick={() => onPageChange && onPageChange(page + 1)}
+              disabled={page >= totalPages}
+              className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-white transition-colors"
+              title="Next Page"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
