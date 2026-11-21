@@ -1,0 +1,21 @@
+{
+  "name": "lead-manager-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full Stack Lead Manager Screening Assignment - Meru Technosoft",
+  "scripts": {
+    "test:backend": "cd backend && npm test",
+    "build:frontend": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "meru-technosoft",
+    "lead-manager",
+    "mern",
+    "react",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC"
+}

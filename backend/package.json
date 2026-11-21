@@ -1,0 +1,31 @@
+{
+  "name": "lead-manager-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Lead Manager application",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "node testLeadValidation.js && node testControllers.js"
+  },
+  "keywords": [
+    "lead-manager",
+    "express",
+    "mongodb",
+    "mongoose",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "supertest": "^7.3.2"
+  }
+}
