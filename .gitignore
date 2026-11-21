@@ -2,13 +2,10 @@
 node_modules/
 */node_modules/
 
-# Environment Variables & Secrets (Keep out of git as required by Meru Technosoft guidelines)
-.env
-.env.*
-!.env.example
-*/.env
-*/.env.*
-!*/.env.example
+# Environment Variables & Secrets (Completely excluded from git)
+.env*
+*.env*
+**/.env*
 
 # Build Outputs
 dist/

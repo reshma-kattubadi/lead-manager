@@ -260,7 +260,7 @@ If you do not have MongoDB installed locally, you don't need to install anything
 5. Click **Connect** -> **Connect your application** -> Copy the connection string.
 6. Replace `<username>` and `<password>` with your credentials in `backend/.env`:
    ```env
-   MONGODB_URI=mongodb+srv://admin:YourPassword123@cluster0.mongodb.net/lead_manager?retryWrites=true&w=majority
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/lead_manager?retryWrites=true&w=majority
    ```
 
 ### Option C: Local MongoDB Daemon
